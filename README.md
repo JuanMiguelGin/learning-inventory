@@ -4,7 +4,7 @@ Sistema de gestión de inventario desarrollado como proyecto de aprendizaje de b
 
 ## 🚀 Demo en producción
 
-**URL:** [https://aquí-tu-url.vercel.app]https://learning-inventory-phn5oh6fw-juanmiguelgins-projects.vercel.app/
+**URL:** https://learning-inventory-phn5oh6fw-juanmiguelgins-projects.vercel.app/
  
 ---
  
@@ -30,7 +30,6 @@ El objetivo del proyecto era construir un sistema de inventario completo desde c
 | **TypeScript** | Tipado estático para detectar errores antes de ejecutar el código |
 | **Tailwind CSS** | Estilos del frontend sin escribir CSS manual |
 | **@neondatabase/serverless** | Driver oficial para conectar Next.js con Neon vía HTTP |
-| **Drizzle ORM** | ORM tipado para interactuar con la base de datos desde TypeScript |
 | **Vercel** | Despliegue automático del proyecto en la nube |
 | **Git + GitHub** | Control de versiones y repositorio remoto |
  
@@ -43,19 +42,15 @@ learning-inventory/
 │
 ├── app/                          # App Router de Next.js
 │   ├── api/
-│   │   ├── products/
-│   │   │   └── route.ts          # GET y POST /api/products (SQL puro + parámetros preparados)
-│   │   └── categories/
-│   │       └── route.ts          # GET /api/categories (consulta con Drizzle ORM)
+│   │   └── products/
+│   │       └── route.ts          # GET y POST /api/products (SQL puro + parámetros preparados)
 │   └── page.tsx                  # Página principal → renderiza ProductList
 │
 ├── components/
 │   └── ProductList.tsx           # Componente React: tabla de inventario con estados de carga/error
 │
 ├── lib/
-│   ├── db.ts                     # Cliente Neon con SQL puro (singleton)
-│   ├── drizzle.ts                # Cliente Drizzle ORM
-│   └── schema.ts                 # Esquema de la base de datos en TypeScript (Drizzle)
+│   └── db.ts                     # Cliente Neon (singleton), conexión a la base de datos
 │
 ├── sql/
 │   ├── schema.sql                # DDL: CREATE TABLE categories y products con constraints
@@ -67,7 +62,6 @@ learning-inventory/
 │   └── seguridad-db.md           # SQL Injection, consultas parametrizadas y otras medidas
 │
 ├── .env.local                    # Variables de entorno locales (NO está en Git)
-├── .env.local.example            # Plantilla del .env.local para otros desarrolladores
 ├── .gitignore                    # Excluye node_modules, .env.local, .next, etc.
 └── README.md                     # Este archivo
 ```
@@ -104,9 +98,6 @@ Devuelve todos los productos con su categoría usando un `INNER JOIN`.
 ### `POST /api/products`
 Crea un nuevo producto. Usa consultas parametrizadas para prevenir SQL Injection.
  
-### `GET /api/categories`
-Devuelve los productos con sus categorías usando **Drizzle ORM** en vez de SQL puro.
- 
 ---
  
 ## Seguridad
@@ -123,52 +114,6 @@ const [newProduct] = await sql`
 ```
  
 La `DATABASE_URL` con las credenciales de la base de datos reside únicamente en `.env.local` (local) y en las variables de entorno de Vercel (producción), nunca en el código fuente.
- 
----
- 
-## Drizzle ORM
- 
-Además de SQL puro, el proyecto integra **Drizzle ORM**, que permite definir el esquema de la base de datos en TypeScript y realizar consultas con una API fluida y completamente tipada.
- 
-### Ventajas frente a SQL puro
- 
-- **Autocompletado completo** en VS Code: el editor sabe qué tablas y columnas existen.
-- **Errores en tiempo de compilación**: TypeScript detecta un nombre de columna incorrecto antes de ejecutar el código, no en producción.
-- **Refactoring seguro**: renombrar una columna en el schema marca automáticamente todos los usos incorrectos.
-- **Migraciones automáticas**: `drizzle-kit generate` crea los archivos SQL de migración a partir del schema de TypeScript.
-```typescript
-// Consulta tipada con Drizzle — equivalente al INNER JOIN del SQL puro
-const result = await db
-  .select({
-    producto:  products.name,
-    precio:    products.price,
-    categoria: categories.name,
-  })
-  .from(products)
-  .innerJoin(categories, eq(products.categoryId, categories.id));
-```
- 
----
- 
-## Puesta en marcha local
- 
-```bash
-# 1. Instalar dependencias
-npm install
- 
-# 2. Crear el archivo de entorno
-cp .env.local.example .env.local
-# Editar .env.local y añadir tu DATABASE_URL de Neon
- 
-# 3. Ejecutar el schema y los datos en Neon (SQL Editor de neon.tech)
-#    → sql/schema.sql primero
-#    → sql/seed.sql después
- 
-# 4. Arrancar el servidor
-npm run dev
-```
- 
-La aplicación estará disponible en `http://localhost:3000`.
  
 ---
  
